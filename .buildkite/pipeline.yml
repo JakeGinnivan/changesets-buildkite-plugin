@@ -1,0 +1,14 @@
+# The plugin's own CI. It cannot use itself to release -- it has no npm package
+# -- so this only lints and tests.
+steps:
+  - label: ':bash: shellcheck'
+    command: |
+      docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable \
+        hooks/command lib/*.sh tests/*.sh
+    agents:
+      queue: linux-small
+
+  - label: ':test_tube: is-version-pr fixtures'
+    command: tests/fixtures.sh
+    agents:
+      queue: linux-small
