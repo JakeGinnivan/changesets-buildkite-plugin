@@ -12,3 +12,8 @@ steps:
     command: tests/fixtures.sh
     agents:
       queue: linux-small
+
+  - label: ':test_tube: generated step reference'
+    command: tests/upload-step.sh
+    agents:
+      queue: linux-small

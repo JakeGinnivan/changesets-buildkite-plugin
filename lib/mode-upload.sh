@@ -65,12 +65,21 @@ emit_step() {
     const [label, stepMode, agentsJson, group, command, pluginsJson, publishMode,
            release, npmUser] = process.argv.slice(1)
 
-    // Find how this pipeline referred to the plugin, and reuse it verbatim.
+    // Find how this pipeline referred to the plugin, and reuse it verbatim, so
+    // the generated step resolves the same way this one did -- including a
+    // pinned tag or SHA, a full git URL, or a vendored relative path.
+    //
+    // Matching on the *config* rather than the name: a plugin may be referenced
+    // as `org/changesets#v1`, as a full URL, or vendored as
+    // `./.buildkite/plugins/whatever`, and only the last of those is guaranteed
+    // to carry our name. The entry running right now is the one whose config
+    // has the `mode` we were invoked with.
     let ref = null
     try {
       for (const entry of JSON.parse(pluginsJson || "[]")) {
-        const key = typeof entry === "string" ? entry : Object.keys(entry)[0]
-        if (/changesets(-buildkite-plugin)?(#|$)/.test(key)) {
+        if (typeof entry !== "object" || entry === null) { continue }
+        const [key, config] = Object.entries(entry)[0] ?? []
+        if (config && typeof config === "object" && config.mode === "upload") {
           ref = key
           break
         }
@@ -78,7 +87,11 @@ emit_step() {
     } catch {}
 
     if (!ref) {
-      console.error("Could not determine this plugin version from BUILDKITE_PLUGINS.")
+      console.error(
+        "Could not find this plugin in BUILDKITE_PLUGINS, so the generated step\n" +
+        "would not know which version to run. Expected an entry whose config\n" +
+        "sets mode=upload.\n" +
+        "BUILDKITE_PLUGINS was: " + (pluginsJson || "(unset)"))
       process.exit(1)
     }
 
