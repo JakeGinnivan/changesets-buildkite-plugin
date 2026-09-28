@@ -26,9 +26,17 @@ steps:
     plugins:
       - JakeGinnivan/changesets#v0.1.0:
           mode: upload
+          command: pnpm install --frozen-lockfile
+          depends-on:
+            - ci
           agents:
             queue: linux-small
 ```
+
+`command` and `agents` here apply to the steps `mode: upload` *generates* —
+they are new steps with no command of their own. `depends-on` names the step
+keys they wait on, which is how a release is kept off a commit whose tests
+failed.
 
 The plugin runs as a **`post-command`** hook, so the step's own `command:` runs
 first. That is where you install your toolchain and dependencies — the plugin
@@ -58,6 +66,7 @@ which half is happening before it runs, instead of you learning it from a log.
 | `npm-user` | — | npm account whose staged-packages page is linked (see below) |
 | `command` | — | `command:` given to the steps `mode: upload` generates, since they are new steps with no command of their own |
 | `agents` | — | Agent tags for the generated steps |
+| `depends-on` | — | Step keys the generated release steps depend on, so a release never runs on untested code |
 
 ## Staged publishing
 
