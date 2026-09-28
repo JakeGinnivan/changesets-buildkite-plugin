@@ -16,18 +16,27 @@ branch:
 ```yaml
 steps:
   - label: ':memo: changeset'
+    command: pnpm install --frozen-lockfile
     plugins:
       - JakeGinnivan/changesets#v0.1.0:
           mode: check
 
   - label: ':pipeline: release'
+    command: pnpm install --frozen-lockfile
     plugins:
       - JakeGinnivan/changesets#v0.1.0:
           mode: upload
-          command: pnpm install --frozen-lockfile
           agents:
             queue: linux-small
 ```
+
+The plugin runs as a **`post-command`** hook, so the step's own `command:` runs
+first. That is where you install your toolchain and dependencies — the plugin
+does not pick a package manager for you, it only needs the changesets CLI
+resolvable by `npx --no-install` once your command has finished.
+
+A `command` hook would have *replaced* your command rather than running after
+it, which is why it is not one.
 
 `mode: upload` runs `changeset status` and uploads *one* step, named for what it
 will do:
@@ -47,7 +56,7 @@ which half is happening before it runs, instead of you learning it from a log.
 | `publish` | `publish` | `publish`, `stage`, or `none` to leave releasing to your own step |
 | `release` | `true` | Create the GitHub release from the CHANGELOG entry |
 | `npm-user` | — | npm account whose staged-packages page is linked (see below) |
-| `command` | — | Command the generated steps run first, e.g. install and build |
+| `command` | — | `command:` given to the steps `mode: upload` generates, since they are new steps with no command of their own |
 | `agents` | — | Agent tags for the generated steps |
 
 ## Staged publishing
