@@ -4,7 +4,7 @@ steps:
   - label: ':bash: shellcheck'
     command: |
       docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable \
-        hooks/command lib/*.sh tests/*.sh
+        hooks/post-command lib/*.sh tests/*.sh
     agents:
       queue: linux-small
 
@@ -15,5 +15,10 @@ steps:
 
   - label: ':test_tube: generated step reference'
     command: tests/upload-step.sh
+    agents:
+      queue: linux-small
+
+  - label: ':test_tube: release hook fixtures'
+    command: bash tests/release.sh
     agents:
       queue: linux-small
